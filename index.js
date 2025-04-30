@@ -1,4 +1,24 @@
-// Reemplaza la configuración del navegador Puppeteer con esto:
+const express = require("express");
+const puppeteer = require("puppeteer");
+
+const app = express();
+// Modificamos para que use el puerto asignado por Render o el 9101 por defecto
+const PORT = process.env.PORT || 9101;
+app.set("port", PORT);
+app.use(express.json());
+
+// Añadir middleware para CORS
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+        return res.status(200).json({});
+    }
+    next();
+});
+
+// Configuración de Puppeteer optimizada para entornos cloud como Render
 const launchBrowser = async () => {
     return puppeteer.launch({
         args: [
@@ -11,13 +31,13 @@ const launchBrowser = async () => {
             "--no-zygote",
             "--single-process"
         ],
-        headless: true,
+        headless: "new", // Usar el nuevo modo headless
         protocolTimeout: 60000,
         timeout: 60000
     });
 };
 
-// Y actualiza cómo inicializas el navegador:
+// Inicializar browser de forma asíncrona
 let browserInstance = null;
 const getBrowser = async () => {
     if (!browserInstance) {
@@ -38,10 +58,12 @@ const getBrowser = async () => {
     return browserInstance;
 };
 
-// Luego, donde antes tenías:
-// const browserP = puppeteer.launch({ ... });
+// Ruta para verificar si la API está funcionando
+app.get("/", (req, res) => {
+    res.json({ message: "API de consulta SUNAT funcionando correctamente" });
+});
 
-// Ahora en tu endpoint harás:
+// A partir de aquí tu ruta para SUNAT
 app.post("/sunat", (req, res) => {
     let page;
     let body_filtros = req.body;

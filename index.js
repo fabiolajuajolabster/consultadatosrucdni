@@ -1,36 +1,55 @@
-const express = require("express");
-const puppeteer = require("puppeteer");
+// Reemplaza la configuración del navegador Puppeteer con esto:
+const launchBrowser = async () => {
+    return puppeteer.launch({
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--disable-accelerated-2d-canvas",
+            "--no-first-run",
+            "--no-zygote",
+            "--single-process"
+        ],
+        headless: true,
+        protocolTimeout: 60000,
+        timeout: 60000
+    });
+};
 
-const app = express();
-app.set("port", process.env.PORT || 9101);
-app.use(express.json());
-
-// Añadir middleware para CORS
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-        return res.status(200).json({});
+// Y actualiza cómo inicializas el navegador:
+let browserInstance = null;
+const getBrowser = async () => {
+    if (!browserInstance) {
+        try {
+            browserInstance = await launchBrowser();
+            
+            // Reiniciar el navegador si se cierra inesperadamente
+            browserInstance.on('disconnected', () => {
+                console.log('Browser disconnected. Restarting...');
+                browserInstance = null;
+            });
+        } catch (err) {
+            console.error('Error launching browser:', err);
+            browserInstance = null;
+            throw err;
+        }
     }
-    next();
-});
+    return browserInstance;
+};
 
-// Opciones mejoradas para Puppeteer con mayores timeouts
-const browserP = puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    headless: true,
-    protocolTimeout: 60000, // Aumentar a 60 segundos
-    timeout: 60000 // Timeout general
-});
+// Luego, donde antes tenías:
+// const browserP = puppeteer.launch({ ... });
 
+// Ahora en tu endpoint harás:
 app.post("/sunat", (req, res) => {
     let page;
     let body_filtros = req.body;
     console.log(body_filtros);
     (async () => {
         try {
-            page = await (await browserP).newPage();
+            const browser = await getBrowser();
+            page = await browser.newPage();
             await page.setDefaultNavigationTimeout(60000); // 60 segundos para navegación
             await page.setDefaultTimeout(60000); // 60 segundos para otras operaciones
             

@@ -1,7 +1,11 @@
-FROM node:16-slim
+FROM node:16
 
-# Instalar dependencias para Puppeteer
+# Directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias para Chrome
 RUN apt-get update && apt-get install -y \
+    libgbm1 \
     gconf-service \
     libasound2 \
     libatk1.0-0 \
@@ -35,26 +39,22 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     ca-certificates \
     fonts-liberation \
-    libappindicator1 \
     libnss3 \
     lsb-release \
     xdg-utils \
-    wget
+    wget \
+    xvfb \
+    libgbm-dev
 
-# Crear directorio de trabajo
-WORKDIR /app
-
-# Copiar archivos de dependencias
+# Copiar archivos de package.json e instalar dependencias
 COPY package*.json ./
-
-# Instalar dependencias
 RUN npm install
 
-# Copiar código fuente
+# Copiar el código fuente
 COPY . .
 
-# Exponer el puerto (debe coincidir con el puerto que usa tu aplicación)
-EXPOSE 9101
+# Exponer el puerto
+EXPOSE 10000
 
 # Comando para ejecutar la aplicación
-CMD ["node", "index.js"]
+CMD ["npm", "start"]

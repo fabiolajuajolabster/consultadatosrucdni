@@ -1,5 +1,5 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 
 const app = express();
 const PORT = process.env.PORT || 9101;
@@ -29,7 +29,7 @@ const browserP = puppeteer.launch({
         '--single-process',
         '--disable-gpu'
     ],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
     headless: true,
     protocolTimeout: 60000, // Aumentar a 60 segundos
     timeout: 60000 // Timeout general

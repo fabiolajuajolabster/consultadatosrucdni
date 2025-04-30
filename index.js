@@ -2,7 +2,7 @@ const express = require("express");
 const puppeteer = require("puppeteer");
 
 const app = express();
-app.set("port", 9101);
+app.set("port", process.env.PORT || 9101);
 app.use(express.json());
 
 // Añadir middleware para CORS

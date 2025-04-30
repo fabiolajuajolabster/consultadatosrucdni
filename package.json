@@ -1,16 +1,20 @@
 {
-  "name": "sunat-consulta",
+  "name": "consultadatosrucdni",
   "version": "1.0.0",
+  "description": "API para consulta de datos RUC y DNI desde SUNAT mediante web scraping",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon index.js"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0",
-    "puppeteer": "^24.7.2"
+    "express": "^4.18.2",
+    "puppeteer": "^21.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }

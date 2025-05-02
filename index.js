@@ -104,8 +104,9 @@ app.post("/sunat", (req, res) => {
             await new Promise(resolve => setTimeout(resolve, 3000));
             
             let salida = await page.evaluate(() => {
-                // Intentar obtener datos según el formato de respuesta para RUC
+                // Intentar obtener datos según el formato de respuesta
                 let razonSocial = "";
+                let domicilioFiscal = "";
                 let elementos = document.querySelectorAll('.list-group-item-heading');
                 
                 if (elementos && elementos.length > 0) {
@@ -122,9 +123,23 @@ app.post("/sunat", (req, res) => {
                             razonSocial = textoCompleto;
                         }
                         
+                        // Buscar el domicilio fiscal
+                        const itemsDomicilio = document.querySelectorAll('.list-group-item');
+                        for (let i = 0; i < itemsDomicilio.length; i++) {
+                            const heading = itemsDomicilio[i].querySelector('.list-group-item-heading');
+                            if (heading && heading.textContent.includes("Domicilio Fiscal")) {
+                                const textoItem = itemsDomicilio[i].querySelector('.list-group-item-text');
+                                if (textoItem) {
+                                    domicilioFiscal = textoItem.textContent.trim();
+                                    break;
+                                }
+                            }
+                        }
+                        
                         return {
                             razon_social: razonSocial,
-                            actividades: elementos[10] ? elementos[10].textContent.trim() : "No encontrado"
+                            actividades: elementos[10] ? elementos[10].textContent.trim() : "No encontrado",
+                            domicilio_fiscal: domicilioFiscal
                         };
                     } 
                     // Verificar si es respuesta de búsqueda por DNI (lista de resultados)
@@ -133,11 +148,28 @@ app.post("/sunat", (req, res) => {
                         let elementosNombre = document.querySelectorAll('h4.list-group-item-heading');
                         if (elementosNombre && elementosNombre.length > 1) {
                             // El segundo h4 dentro del item contiene el nombre completo
-                            razonSocial = elementosNombre[1].textContent.trim();
+                            let nombreCompleto = elementosNombre[1].textContent.trim();
+                            
+                            // Convertir el nombre a formato de capitalización correcta
+                            // (primera letra de cada palabra en mayúscula)
+                            nombreCompleto = nombreCompleto.toLowerCase().split(' ').map(palabra => {
+                                return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+                            }).join(' ');
+                            
+                            // Reordenar el nombre (suponiendo que sigue el formato "APELLIDOS NOMBRES")
+                            const palabras = nombreCompleto.split(' ');
+                            if (palabras.length >= 3) {
+                                // Asumimos que los 2 primeros son apellidos y el resto nombres
+                                // (Esto es una simplificación, la lógica real podría ser más compleja)
+                                const apellidos = palabras.slice(0, 2).join(' ');
+                                const nombres = palabras.slice(2).join(' ');
+                                nombreCompleto = nombres + ' ' + apellidos;
+                            }
                             
                             return {
-                                razon_social: razonSocial,
-                                actividades: "No aplica para DNI"
+                                razon_social: nombreCompleto,
+                                actividades: "No aplica para este tipo de documento",
+                                domicilio_fiscal: "No aplica para este tipo de documento"
                             };
                         }
                     }
@@ -146,7 +178,8 @@ app.post("/sunat", (req, res) => {
                 // Si no se pudo extraer de ninguna manera, devolver mensaje genérico
                 return {
                     razon_social: "No se pudo extraer el nombre",
-                    actividades: "No encontrado"
+                    actividades: "No encontrado",
+                    domicilio_fiscal: "No encontrado"
                 };
             });
             res.send(salida);
